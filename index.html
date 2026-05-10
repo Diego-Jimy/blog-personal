@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Blog personal con autenticación básica, CRUD de publicaciones y persistencia en LocalStorage." />
+
+  <title>El Diario Digital | Blog Personal</title>
+
+  <!-- Fuentes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lora:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+
+  <!-- Vista de autenticación -->
+  <div id="view-auth" class="view active">
+    <div class="auth-layout">
+
+      <!-- Panel de marca -->
+      <aside class="auth-brand">
+        <div class="brand-content">
+          <span class="brand-tag">BLOG PERSONAL</span>
+          <h1 class="brand-title">El<br />Diario<br />Digital</h1>
+          <p class="brand-sub">Escribe, guarda y administra tus publicaciones personales.</p>
+        </div>
+      </aside>
+
+      <!-- Panel de formularios -->
+      <main class="auth-panel">
+        <div class="auth-tabs">
+          <button class="tab-btn active" id="tab-login" type="button" onclick="Auth.switchTab('login')">
+            Iniciar sesión
+          </button>
+
+          <button class="tab-btn" id="tab-register" type="button" onclick="Auth.switchTab('register')">
+            Registrarse
+          </button>
+        </div>
+
+        <!-- Login -->
+        <form id="form-login" class="auth-form" onsubmit="Auth.login(event)">
+          <h2 class="form-title">Bienvenido</h2>
+          <p class="form-subtitle">Ingresa con tu usuario o correo electrónico.</p>
+
+          <div class="field-group">
+            <label for="login-user">Usuario o email</label>
+            <input
+              type="text"
+              id="login-user"
+              placeholder="usuario o correo@email.com"
+              autocomplete="username"
+              required
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="login-pass">Contraseña</label>
+            <input
+              type="password"
+              id="login-pass"
+              placeholder="Mínimo 6 caracteres"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+
+          <p id="login-error" class="form-error hidden"></p>
+
+          <button type="submit" class="btn-primary">Entrar</button>
+        </form>
+
+        <!-- Registro -->
+        <form id="form-register" class="auth-form hidden" onsubmit="Auth.register(event)">
+          <h2 class="form-title">Crear cuenta</h2>
+          <p class="form-subtitle">Regístrate para empezar a publicar.</p>
+
+          <div class="field-group">
+            <label for="reg-name">Nombre completo</label>
+            <input
+              type="text"
+              id="reg-name"
+              placeholder="Diego Jimy"
+              autocomplete="name"
+              required
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="reg-email">Correo electrónico</label>
+            <input
+              type="email"
+              id="reg-email"
+              placeholder="correo@email.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="reg-user">Usuario</label>
+            <input
+              type="text"
+              id="reg-user"
+              placeholder="diego_jimy"
+              autocomplete="username"
+              minlength="3"
+              required
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="reg-pass">Contraseña</label>
+            <input
+              type="password"
+              id="reg-pass"
+              placeholder="Mínimo 6 caracteres"
+              autocomplete="new-password"
+              minlength="6"
+              required
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="reg-pass2">Confirmar contraseña</label>
+            <input
+              type="password"
+              id="reg-pass2"
+              placeholder="Repite la contraseña"
+              autocomplete="new-password"
+              minlength="6"
+              required
+            />
+          </div>
+
+          <p id="register-error" class="form-error hidden"></p>
+
+          <button type="submit" class="btn-primary">Crear cuenta</button>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <!-- Vista del blog -->
+  <div id="view-blog" class="view hidden">
+
+    <!-- Header -->
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="logo" href="#" onclick="Blog.showList()">El Diario Digital</a>
+
+        <nav class="header-nav">
+          <span id="header-username" class="nav-user"></span>
+
+          <button class="btn-outline" type="button" onclick="Blog.showEditor(null)">
+            Nueva entrada
+          </button>
+
+          <button class="btn-ghost" type="button" onclick="Auth.logout()">
+            Salir
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Lista de publicaciones -->
+    <section id="sub-list" class="sub-view">
+      <div class="page-hero">
+        <p class="hero-label">PUBLICACIONES RECIENTES</p>
+        <h2 id="hero-greeting" class="hero-title"></h2>
+        <p id="posts-counter" class="hero-count"></p>
+      </div>
+
+      <main class="container">
+
+        <!-- Buscador -->
+        <div class="blog-toolbar">
+          <input
+            type="search"
+            id="search-posts"
+            class="search-input"
+            placeholder="Buscar por título o contenido..."
+            oninput="Blog.renderPosts()"
+          />
+        </div>
+
+        <!-- Posts -->
+        <div id="posts-grid" class="posts-grid"></div>
+
+        <!-- Estado vacío -->
+        <div id="empty-state" class="empty-state hidden">
+          <p class="empty-icon">Sin publicaciones</p>
+          <p class="empty-text">Aún no tienes entradas registradas.</p>
+
+          <button class="btn-primary" type="button" onclick="Blog.showEditor(null)">
+            Escribir primera entrada
+          </button>
+        </div>
+      </main>
+    </section>
+
+    <!-- Lectura individual -->
+    <section id="sub-read" class="sub-view hidden">
+      <main class="container narrow">
+        <button class="back-btn" type="button" onclick="Blog.showList()">
+          Volver
+        </button>
+
+        <article class="post-article">
+          <header class="post-header">
+            <p id="read-date" class="post-meta"></p>
+            <h1 id="read-title" class="post-title"></h1>
+            <p id="read-author" class="post-author"></p>
+          </header>
+
+          <div id="read-body" class="post-body"></div>
+
+          <footer class="post-footer">
+            <button class="btn-outline" type="button" onclick="Blog.editCurrent()">
+              Editar
+            </button>
+
+            <button class="btn-danger" type="button" onclick="Blog.deleteCurrent()">
+              Eliminar
+            </button>
+          </footer>
+        </article>
+      </main>
+    </section>
+
+    <!-- Editor -->
+    <section id="sub-editor" class="sub-view hidden">
+      <main class="container narrow">
+        <button class="back-btn" type="button" onclick="Blog.showList()">
+          Volver
+        </button>
+
+        <div class="editor-card">
+          <h2 id="editor-title-label" class="editor-heading">Nueva entrada</h2>
+
+          <form id="form-post" onsubmit="Blog.savePost(event)">
+            <div class="field-group">
+              <label for="post-title">Título</label>
+              <input
+                type="text"
+                id="post-title"
+                placeholder="Escribe un título"
+                maxlength="100"
+                required
+              />
+            </div>
+
+            <div class="field-group">
+              <label for="post-body">Contenido</label>
+              <textarea
+                id="post-body"
+                rows="14"
+                placeholder="Escribe el contenido de la publicación"
+                required
+              ></textarea>
+            </div>
+
+            <p id="post-error" class="form-error hidden"></p>
+
+            <div class="editor-actions">
+              <button type="button" class="btn-ghost" onclick="Blog.showList()">
+                Cancelar
+              </button>
+
+              <button type="submit" class="btn-primary" id="save-btn">
+                Publicar
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </section>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden" aria-live="polite"></div>
+
+  <!-- Scripts -->
+  <script src="js/auth.js"></script>
+  <script src="js/posts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
